@@ -1,0 +1,8 @@
+﻿<Window x:Class="kinectDemo.latency"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="latency" Height="300" Width="300">
+    <Grid>
+        <TextBlock Height="237" HorizontalAlignment="Left" Margin="12,12,0,0" Name="textBlock1" Text="100,000,000" VerticalAlignment="Top" Width="254" Background="Black" Foreground="Red" TextAlignment="Center" FontStretch="UltraExpanded" TextWrapping="Wrap" FontSize="48" />
+    </Grid>
+</Window>

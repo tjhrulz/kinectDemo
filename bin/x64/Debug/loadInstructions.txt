@@ -1,0 +1,9 @@
+imageChangesPerDegree=1
+numFrames=1
+framesPerSecond=0
+inversion=false
+debugMode=false
+kinectAngle=0
+startPaused=true
+fileType=png
+loadMethod=fast
