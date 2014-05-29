@@ -60,25 +60,29 @@ namespace kinectDemo
         int currentFrame = 0; //current set of frames
         int inversion = 1;
 
+        string imageType = "png";
 
         bool doXpos = false;
         //used to scale images in xpos mode
-        double screenSize = 1; 
-        double objectsize = 1;
+        double screenWidth = 1; 
+        double objectWidth = 1;
+        int objectWidthPixels = 0;
 
 
 
         KinectSensor mySensor; //name of the kinect plugged in (Which is whatever one was plugged in first out of the current ones)
         //private readonly KinectSensorChooser myKinectChooser = new KinectSensorChooser();
 
-        int numVars = 10; //number of virables read from file loadinstructions
+        int numVars = 11; //number of virables read from file loadinstructions
         void loadInstructions()
         {
             try
             {
                 using (StreamReader sr = new StreamReader("loadInstructions.txt"))
                 {
+                    errorBox1.Text = "";
                     bool isPaused = false;
+                    errorBox1.Visibility = System.Windows.Visibility.Hidden;
 
                     String[] vars = new string[numVars+1];
                     for (int i = 0; i < numVars+1; i++)
@@ -151,6 +155,15 @@ namespace kinectDemo
                         errorBox1.Visibility = System.Windows.Visibility.Visible;
                     }
                     //implement line 7 still
+                    try
+                    {
+                         imageType = vars[7].Substring(vars[7].LastIndexOf('=') + 1);
+                    }
+                    catch (Exception)
+                    {
+                        errorBox1.Text += " Load instructions misformatted on line 8"; //inform user of error but continue on
+                        errorBox1.Visibility = System.Windows.Visibility.Visible;
+                    }
 
                     try
                     {
@@ -163,7 +176,7 @@ namespace kinectDemo
                     }
                     try
                     {
-                        screenSize = Convert.ToDouble(vars[9].Substring(vars[9].LastIndexOf('=') + 1));
+                        screenWidth = Convert.ToDouble(vars[9].Substring(vars[9].LastIndexOf('=') + 1));
                     }
                     catch (Exception)
                     {
@@ -172,13 +185,23 @@ namespace kinectDemo
                     }
                     try
                     {
-                        objectsize = Convert.ToDouble(vars[10].Substring(vars[10].LastIndexOf('=') + 1));
+                        objectWidth = Convert.ToDouble(vars[10].Substring(vars[10].LastIndexOf('=') + 1));
                     }
                     catch (Exception)
                     {
                         errorBox1.Text += " Load instructions misformatted on line 11"; //inform user of error but continue on
                         errorBox1.Visibility = System.Windows.Visibility.Visible;
                     }
+                    try
+                    {
+                        objectWidthPixels = Convert.ToInt16(vars[11].Substring(vars[11].LastIndexOf('=') + 1));
+                    }
+                    catch (Exception)
+                    {
+                        errorBox1.Text += " Load instructions misformatted on line 12"; //inform user of error but continue on
+                        errorBox1.Visibility = System.Windows.Visibility.Visible;
+                    }
+
 
 
                     if (inversionBool)
@@ -187,7 +210,7 @@ namespace kinectDemo
                     }
                     if (!debugMode)
                     {
-                        image6_MouseDownManual();
+                        image6_MouseDownManual(true);
                     }
                     if (isPaused)
                     {
@@ -219,17 +242,34 @@ namespace kinectDemo
             {
                 imagesDirectory = imagesDirectory + "\\images\\demo\\"; //go down to images\demo directory if it exists
             }
-
-            numImages = Directory.GetFiles(imagesDirectory, "*.png", SearchOption.TopDirectoryOnly).Length; //count the number of .png files in the directory found above  
-            imagesName = Directory.GetFiles(imagesDirectory, "*.png", SearchOption.TopDirectoryOnly); //every image path split into an array
+            
+            if(imageType == "png")
+            {
+                numImages = Directory.GetFiles(imagesDirectory, "*.png", SearchOption.TopDirectoryOnly).Length; //count the number of .png files in the directory found above  
+                imagesName = Directory.GetFiles(imagesDirectory, "*.png", SearchOption.TopDirectoryOnly); //every image path split into an array
+            }
+            else if (imageType == "jpg")
+            {
+                numImages = Directory.GetFiles(imagesDirectory, "*.jpg", SearchOption.TopDirectoryOnly).Length; //count the number of .png files in the directory found above  
+                imagesName = Directory.GetFiles(imagesDirectory, "*.jpg", SearchOption.TopDirectoryOnly); //every image path split into an array
+            }
 
             images = new BitmapSource[numImages];
             for (int i = 0; i < imagesName.Length; i++)
             {
                 using (Stream imageStreamSource = new FileStream(imagesName[i], FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
-                    PngBitmapDecoder decoder = new PngBitmapDecoder(imageStreamSource, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
-                    images[i] = decoder.Frames[0]; //decode the images into a series of pixels and store them in images which is a BitmapSource
+                    if(imageType == "png")
+                    {
+                        PngBitmapDecoder decoder = new PngBitmapDecoder(imageStreamSource, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+                        images[i] = decoder.Frames[0]; //decode the images into a series of pixels and store them in images which is a BitmapSource
+                    }
+                    else if (imageType == "jpg")
+                    {
+                        JpegBitmapDecoder decoder = new JpegBitmapDecoder(imageStreamSource, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+                        images[i] = decoder.Frames[0]; //decode the images into a series of pixels and store them in images which is a BitmapSourc
+                    }
+                    
                 }
             }
 
@@ -483,7 +523,11 @@ namespace kinectDemo
                             }
 
                             image6.Source = images[imageToLoad];//load apropriate image array into the image source
-                            //image6.Width = image6.ActualWidth *
+                            if (imageFullscreened == 6)
+                            {
+                                image6.Width = (this.ActualWidth * (screenWidth / objectWidth));
+                                image6.Height = (this.ActualWidth * (screenWidth / objectWidth));
+                            }
                         }
                         else
                         {
@@ -706,29 +750,56 @@ namespace kinectDemo
             return imageToLoad + (currentFrame * imagesPerFrame);
         }
 
-        private void image6_MouseDownManual()
+        private void image6_MouseDownManual(bool doFullscreen)
         {
-            debugBlock1.Visibility = System.Windows.Visibility.Hidden;
-            debugBlock2.Visibility = System.Windows.Visibility.Hidden;
-            debugBlock3.Visibility = System.Windows.Visibility.Hidden;
-            textBlock1.Visibility = System.Windows.Visibility.Hidden;
+            if (doFullscreen)
+            {
+                debugBlock1.Visibility = System.Windows.Visibility.Hidden;
+                debugBlock2.Visibility = System.Windows.Visibility.Hidden;
+                debugBlock3.Visibility = System.Windows.Visibility.Hidden;
+                textBlock1.Visibility = System.Windows.Visibility.Hidden;
 
-            this.WindowState = WindowState.Maximized;
-            this.WindowStyle = WindowStyle.None;
+                this.WindowState = WindowState.Maximized;
+                this.WindowStyle = WindowStyle.None;
 
-            image1.Visibility = System.Windows.Visibility.Hidden;
-            image2.Visibility = System.Windows.Visibility.Hidden;
-            image3.Visibility = System.Windows.Visibility.Hidden;
-            image4.Visibility = System.Windows.Visibility.Hidden;
-            image5.Visibility = System.Windows.Visibility.Hidden;
-            image6.Visibility = System.Windows.Visibility.Visible;
+                image1.Visibility = System.Windows.Visibility.Hidden;
+                image2.Visibility = System.Windows.Visibility.Hidden;
+                image3.Visibility = System.Windows.Visibility.Hidden;
+                image4.Visibility = System.Windows.Visibility.Hidden;
+                image5.Visibility = System.Windows.Visibility.Hidden;
+                image6.Visibility = System.Windows.Visibility.Visible;
 
-            image6.Height = this.ActualHeight;
-            image6.Width = this.ActualWidth;
+                image6.Height = this.ActualHeight;
+                image6.Width = this.ActualWidth;
 
-            image6.Margin = new Thickness(0, 0, 0, 0);
+                image6.Margin = new Thickness(0, 0, 0, 0);
 
-            imageFullscreened = 6;
+                imageFullscreened = 6;
+            }
+            else
+            {
+                this.WindowState = WindowState.Normal;
+                this.WindowStyle = WindowStyle.SingleBorderWindow;
+
+                debugBlock1.Visibility = System.Windows.Visibility.Visible;
+                debugBlock2.Visibility = System.Windows.Visibility.Visible;
+                debugBlock3.Visibility = System.Windows.Visibility.Visible;
+                textBlock1.Visibility = System.Windows.Visibility.Visible;
+
+                image1.Visibility = System.Windows.Visibility.Visible;
+                image2.Visibility = System.Windows.Visibility.Visible;
+                image3.Visibility = System.Windows.Visibility.Visible;
+                image4.Visibility = System.Windows.Visibility.Visible;
+                image5.Visibility = System.Windows.Visibility.Visible;
+                image6.Visibility = System.Windows.Visibility.Visible;
+
+                image6.Height = 240;
+                image6.Width = 320;
+
+                image6.Margin = new Thickness(638, 240, 0, 0);
+
+                imageFullscreened = 0;
+            }
         }
 
 
@@ -1107,6 +1178,10 @@ namespace kinectDemo
             else if (e.Key == Key.R) //If down arrow pressed manually change frame backward
             {
                 loadInstructions();
+            }
+            else if (e.Key == Key.Escape)
+            {
+                image6_MouseDownManual(false);
             }
         }
     }

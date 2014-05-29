@@ -1,3 +1,4 @@
 # git ignore file
-*.png
-*.jpg
+demo/
+*.cache
+*.db
