@@ -46,7 +46,7 @@ namespace kinectDemo
         int imagesPerFrame = 0; //how many times the image will be split
         float splitSize = 0; // how many pixels across each split of the image is
         
-        int numVars = 7; //number of virables read from file loadinstructions
+
         //default variables if file does not exist
         float imagesPerDegree = 1; //how frequently are images loaded (ie. every 1 degree, .5 degrees etc.)
         int numFrames = 1; //How many different sets of movement is there (ie. 12 frames would be 12 sets of images for different times each being the full amount of angles)
@@ -61,38 +61,27 @@ namespace kinectDemo
         int inversion = 1;
 
 
+        bool doXpos = false;
+        //used to scale images in xpos mode
+        double screenSize = 1; 
+        double objectsize = 1;
+
+
+
         KinectSensor mySensor; //name of the kinect plugged in (Which is whatever one was plugged in first out of the current ones)
         //private readonly KinectSensorChooser myKinectChooser = new KinectSensorChooser();
 
-
-        private void Window_Loaded(object sender, RoutedEventArgs e)
+        int numVars = 10; //number of virables read from file loadinstructions
+        void loadInstructions()
         {
-            string imagesDirectory = System.IO.Directory.GetCurrentDirectory();
-            if (Directory.Exists(imagesDirectory + "\\images\\demo\\"))
-            {
-                imagesDirectory = imagesDirectory + "\\images\\demo\\"; //go down to images\demo directory if it exists
-            }
-
-            numImages = Directory.GetFiles(imagesDirectory, "*.png", SearchOption.TopDirectoryOnly).Length; //count the number of .png files in the directory found above  
-            imagesName = Directory.GetFiles(imagesDirectory, "*.png", SearchOption.TopDirectoryOnly); //every image path split into an array
-
-            images = new BitmapSource[numImages];
-            for (int i = 0; i < imagesName.Length; i++)
-            {
-                using (Stream imageStreamSource = new FileStream(imagesName[i], FileMode.Open, FileAccess.Read, FileShare.Read))
-                {
-                    PngBitmapDecoder decoder = new PngBitmapDecoder(imageStreamSource, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
-                    images[i] = decoder.Frames[0]; //decode the images into a series of pixels and store them in images which is a BitmapSource
-                }
-            }
             try
             {
                 using (StreamReader sr = new StreamReader("loadInstructions.txt"))
                 {
                     bool isPaused = false;
 
-                    String[] vars = new string[numVars];
-                    for (int i = 0; i < numVars; i++)
+                    String[] vars = new string[numVars+1];
+                    for (int i = 0; i < numVars+1; i++)
                     {
                         vars[i] = sr.ReadLine();
                     }
@@ -161,6 +150,36 @@ namespace kinectDemo
                         errorBox1.Text += " Load instructions misformatted on line 7"; //inform user of error but continue on
                         errorBox1.Visibility = System.Windows.Visibility.Visible;
                     }
+                    //implement line 7 still
+
+                    try
+                    {
+                        doXpos = Convert.ToBoolean(vars[8].Substring(vars[8].LastIndexOf('=') + 1));
+                    }
+                    catch (Exception)
+                    {
+                        errorBox1.Text += " Load instructions misformatted on line 9"; //inform user of error but continue on
+                        errorBox1.Visibility = System.Windows.Visibility.Visible;
+                    }
+                    try
+                    {
+                        screenSize = Convert.ToDouble(vars[9].Substring(vars[9].LastIndexOf('=') + 1));
+                    }
+                    catch (Exception)
+                    {
+                        errorBox1.Text += " Load instructions misformatted on line 10"; //inform user of error but continue on
+                        errorBox1.Visibility = System.Windows.Visibility.Visible;
+                    }
+                    try
+                    {
+                        objectsize = Convert.ToDouble(vars[10].Substring(vars[10].LastIndexOf('=') + 1));
+                    }
+                    catch (Exception)
+                    {
+                        errorBox1.Text += " Load instructions misformatted on line 11"; //inform user of error but continue on
+                        errorBox1.Visibility = System.Windows.Visibility.Visible;
+                    }
+
 
                     if (inversionBool)
                     {
@@ -191,7 +210,30 @@ namespace kinectDemo
                 errorBox1.Text += " Load instructions misformatted"; //inform user of error but continue on
                 errorBox1.Visibility = System.Windows.Visibility.Visible;
             }
+        }
 
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            string imagesDirectory = System.IO.Directory.GetCurrentDirectory();
+            if (Directory.Exists(imagesDirectory + "\\images\\demo\\"))
+            {
+                imagesDirectory = imagesDirectory + "\\images\\demo\\"; //go down to images\demo directory if it exists
+            }
+
+            numImages = Directory.GetFiles(imagesDirectory, "*.png", SearchOption.TopDirectoryOnly).Length; //count the number of .png files in the directory found above  
+            imagesName = Directory.GetFiles(imagesDirectory, "*.png", SearchOption.TopDirectoryOnly); //every image path split into an array
+
+            images = new BitmapSource[numImages];
+            for (int i = 0; i < imagesName.Length; i++)
+            {
+                using (Stream imageStreamSource = new FileStream(imagesName[i], FileMode.Open, FileAccess.Read, FileShare.Read))
+                {
+                    PngBitmapDecoder decoder = new PngBitmapDecoder(imageStreamSource, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+                    images[i] = decoder.Frames[0]; //decode the images into a series of pixels and store them in images which is a BitmapSource
+                }
+            }
+
+            loadInstructions(); //Load instructions
 
             float numSplits = numImages; //how many times the image will be split
             float splitSize = (float)image6.Width / numImages; // how many pixels across each split of the image is
@@ -204,11 +246,19 @@ namespace kinectDemo
                 {
                     var parameters = new TransformSmoothParameters //turn all of the stuff off for speed
                     {
+                        /* //fast
                         Smoothing = 0.0f, //higher is slower more smoothing default=.5
                         Correction = 0.99f, //high is faster but "less smooth" and corrects to raw data faster"? default=.5
                         Prediction = 0.0f, //nobody knows anything but "Specifies the number of predicted frames" default=.5
                         JitterRadius = 0.0f, //jitter radius in meters so .05 will return a change under 5cm to be the same default=.05
                         MaxDeviationRadius = 0.0f //max amount in meters that a value after being "filtered can be from its original value default=.04
+                        */
+                        //accurate 
+                        Smoothing = 0.0f, //higher is slower more smoothing default=.5
+                        Correction = 0.0f, //high is faster but "less smooth" and corrects to raw data faster"? default=.5
+                        Prediction = 0.01f, //nobody knows anything but "Specifies the number of predicted frames" default=.5
+                        JitterRadius = 0.004f, //jitter radius in meters so .05 will return a change under 5cm to be the same default=.05
+                        MaxDeviationRadius = 0.04f //max amount in meters that a value after being "filtered can be from its original value default=.04
                     };
                     //On window load once a kinect is found enable all needed streams
                     mySensor.ColorStream.Enable();
@@ -421,15 +471,34 @@ namespace kinectDemo
                         //double degrees = Math.Asin((firstPlayer.Joints[JointType.Head].Position.X / degreesDist)) * (180 / Math.PI); //since degreesDist was not given I decided not to use
                         double degrees = Math.Atan(firstPlayer.Joints[JointType.Head].Position.X / firstPlayer.Joints[JointType.Head].Position.Z) * (180 / Math.PI); //get degrees from X and Y locations 
 
-                        int imageToLoad = (int)ImageFromDegrees(inversion * degrees, imagesPerDegree, imagesPerFrame); //send info to image to load (degrees negative if angle needs to be flipped)
 
-                        if (numFrames > 1)
+                        if (doXpos)
                         {
-                            //do time load
-                            imageToLoad = (int)ImageFromTime(imageToLoad, imagesPerFrame, numFrames, framesPerSecond, ref timeLast, ref currentFrame);  //if more than one set of frames get which set to load based of FPS
+                            int imageToLoad = (int)ImageFromXpos(inversion * firstPlayer.Joints[JointType.Head].Position.X, imagesPerDegree, imagesPerFrame);
+
+                            if (numFrames > 1)
+                            {
+                                //do time load
+                                imageToLoad = (int)ImageFromTime(imageToLoad, imagesPerFrame, numFrames, framesPerSecond, ref timeLast, ref currentFrame);  //if more than one set of frames get which set to load based of FPS
+                            }
+
+                            image6.Source = images[imageToLoad];//load apropriate image array into the image source
+                            //image6.Width = image6.ActualWidth *
+                        }
+                        else
+                        {
+                            int imageToLoad = (int)ImageFromDegrees(inversion * degrees, imagesPerDegree, imagesPerFrame); //send info to image to load (degrees negative if angle needs to be flipped)
+
+                            if (numFrames > 1)
+                            {
+                                //do time load
+                                imageToLoad = (int)ImageFromTime(imageToLoad, imagesPerFrame, numFrames, framesPerSecond, ref timeLast, ref currentFrame);  //if more than one set of frames get which set to load based of FPS
+                            }
+
+                            image6.Source = images[imageToLoad];//load apropriate image array into the image source
                         }
 
-                        image6.Source = images[imageToLoad];//load apropriate image array into the image source
+                        
 
                         //update debug data (move later)
                         debugBlock1.Text = "Degrees Dist: " + degreesDist;
@@ -585,14 +654,23 @@ namespace kinectDemo
                 return 0;
             return value;
         }
-        public static float ImageFromDegrees(double degrees, double degreesPerImage, int numImages) //similar to above but based of degrees protected from crashes and scaleable 
+        public static int ImageFromXpos(double xpos, double xposPerImage, int numImages)
         {
-            float loadImage = (int)(numImages / 2) + (int)(degrees / degreesPerImage); //same as aboce but with degrees in mind to start
+            float loadImage = (int)(numImages / 2) + (int)(xpos / xposPerImage); //same as aboce but with degrees in mind to start
             if (loadImage >= numImages)
                 return numImages - 1;
             if (loadImage < 0)
                 return 0;
-            return loadImage;
+            return (int)loadImage;
+        }
+        public static int ImageFromDegrees(double degrees, double degreesPerImage, int numImages) //similar to above but based of degrees protected from crashes and scaleable 
+        {
+            double loadImage = (numImages / 2) + (degrees / degreesPerImage); //same as aboce but with degrees in mind to start
+            if (loadImage >= numImages)
+                return numImages - 1;
+            if (loadImage < 0)
+                return 0;
+            return (int)loadImage;
         }
         public static float ImageFromTime(int imageToLoad, int imagesPerFrame, int numFrames, int framesPerSecond, ref int lastTime , ref int currentFrame) //based on which image was decided before figure out which frame to load
         {
@@ -1025,6 +1103,10 @@ namespace kinectDemo
             {
                 debugMode = !debugMode;
                 e.Handled = true;
+            }
+            else if (e.Key == Key.R) //If down arrow pressed manually change frame backward
+            {
+                loadInstructions();
             }
         }
     }

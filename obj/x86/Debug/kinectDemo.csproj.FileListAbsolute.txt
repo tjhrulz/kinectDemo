@@ -27,7 +27,5 @@ c:\users\tjhrulz\documents\visual studio 2010\Projects\kinectDemo\kinectDemo\bin
 c:\users\tjhrulz\documents\visual studio 2010\Projects\kinectDemo\kinectDemo\bin\Debug\Microsoft.Kinect.Toolkit.FaceTracking.pdb
 C:\Users\tjhrulz\Documents\Visual Studio 2010\Projects\kinectDemo\kinectDemo\obj\x86\Debug\latency.baml
 C:\Users\tjhrulz\Documents\Visual Studio 2010\Projects\kinectDemo\kinectDemo\obj\x86\Debug\latency.g.cs
-C:\Users\tjhrulz\Documents\Visual Studio 2010\Projects\kinectDemo\kinectDemo\bin\Debug\OpenTK.dll
-C:\Users\tjhrulz\Documents\Visual Studio 2010\Projects\kinectDemo\kinectDemo\bin\Debug\OpenTK.GLControl.dll
 C:\Users\tjhrulz\Documents\Visual Studio 2010\Projects\kinectDemo\kinectDemo\bin\Debug\OpenTK.xml
 C:\Users\tjhrulz\Documents\Visual Studio 2010\Projects\kinectDemo\kinectDemo\bin\Debug\OpenTK.GLControl.xml

@@ -82,7 +82,7 @@ Line 1 formating: decimal=x.x (cant be zero)
 	For best results you want your images to be across 60 degrees and
 	then divide your number of images by 60. Then divide one by that number 
 	That is the number you want to  put on line one 
-	ie. I have 120 images across 60 degrees 1/(120/60) =.25 
+	ie. I have 120 images across 60 degrees 1/(120/60) =.5 
 
 	expert use: you can make the number slightly higher to make the
 	images change faster or slightly lower to make the images change
